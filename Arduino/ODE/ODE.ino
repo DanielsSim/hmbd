@@ -70,13 +70,13 @@ void loop() {
   for (int i=0; i<n; i++) {
     Y_temp[i] = Y_current[i] + K2[i]*dt*0.5;
   }
-  ODE(t + dt*0.5, Y_temp, K2);
+  ODE(t + dt*0.5, Y_temp, K3);
 
   // K4 = Y_p(t0 + dt, Y_current + dt * K3)
   for (int i=0; i<n; i++) {
     Y_temp[i] = Y_current[i] + K3[i]*dt;
   }
-  ODE(t + dt, Y_temp, K3);
+  ODE(t + dt, Y_temp, K4);
 
 
   // Calculate new step:
