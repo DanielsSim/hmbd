@@ -30,11 +30,11 @@ datafull <- read.csv(data_source)
 datafull$date <- as.Date(datafull$date)
 
 countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China',
-               'Denmark', 'Sweden',
+               'Denmark', 
                'Finland', 'France', 'Germany', 'Greece', 'India', 'Iceland', 
                'Italy', 'Japan', 'Netherlands', 'New Zealand',
                'Norway', 'Portugal', 'Russia', 'South Africa', 'South Korea',
-               'Spain', 'Switzerland', 'Taiwan', 'Turkey', 'United Kingdom',
+               'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'United Kingdom',
                'United States')
 
 
@@ -128,13 +128,13 @@ p1 <- ggplot(data=df)+
               fill=rgb(.8,.8,.8))+
   geom_path(aes(x=date, y=M2_accum_cases/1e6, color='M2_accum_cases'))+
   geom_path(aes(x=M1_date, y=M1_accum_cases/1e6, color='M1_accum_cases'))+
-  labs( x = "", y = "total cases in millions") +
+  labs( x = "", y = "total infections in millions") +
   scale_color_manual(name = NULL,
                      values = c( "total_cases" = "red", 
                                  "M1_accum_cases" = "black", 
                                  "M2_accum_cases" = rgb(.5,.5,.5) ),
                      labels = c("M2_accum_cases" ="model 2: cases = f(tests, pos. ratio)", 
-                                "M1_accum_cases" = "model 1: cases = f(deaths, CFR)", 
+                                "M1_accum_cases" = "model 1: cases = f(deaths, IFR)", 
                                 "total_cases" = "official data (new cases: 7-day avg)"))+
   theme(legend.position = c(0.35, 0.85))
 
@@ -145,7 +145,7 @@ p2 <- ggplot(data=df)+
               fill=rgb(.8,.8,.8))+
   geom_path(aes(x=date, y=M2_new_cases/1e3), color=rgb(.5,.5,.5))+
   geom_path(aes(x=M1_date, y=M1_new_cases/1e3), color='black')+
-  labs( x = "", y = "new cases in thousands")
+  labs( x = "", y = "new infections in thousands")
   
 p31 <- ggplot(data=df)+
   geom_path(aes(x=date, y=positive_rate*100), color=rgb(.5,.5,.5))+
