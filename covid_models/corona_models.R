@@ -169,7 +169,8 @@ title <- ggdraw() + draw_label(paste0(targetcountry, " (",
                                       " M population, ", 
                                       round(df$total_deaths[n]/1000, digits=1), 
                                       " k deaths)"), fontface='bold')
-info <- ggdraw() + draw_label(paste0('corona_models.R script version ', script_version, 
+info <- ggdraw() + draw_label(paste0('corona_models.R script version ', script_version,
+                                     ' | documentation: see hmbd.wordpress.com',
                                      ' | data from ourworldindata.org: ',
                                      data_source, ' | newest datapoint: ',
                                      max(df$date)), size=8, color=rgb(.5,.5,.5))
