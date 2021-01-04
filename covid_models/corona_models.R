@@ -22,7 +22,7 @@
 setwd('D:/Daniel/corona_modelle') # output folder for plots
 library('ggplot2')
 library('cowplot')
-script_version <- '1.0'
+script_version <- '1.1'
 
 data_source <- 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
 datafull <- read.csv(data_source)
@@ -87,10 +87,20 @@ for (i in 2:length(df$positive_rate)) {
 }
 # replace _still_ missing data with 0.2:
 df$positive_rate[is.na(df$positive_rate)] <- 0.2
-# new_cases, new_deaths:
+
+# same cleanup process for vaccinations:
+for (i in 2:length(df$total_vaccinations)) {
+  if(is.na(df$total_vaccinations[i]))
+    df$total_vaccinations[i] <- df$total_vaccinations[i-1]
+}
+df$total_vaccinations[is.na(df$total_vaccinations)] <- 0
+
+
+# new_cases, new_deaths: remove na's
 df$new_cases_smoothed[is.na(df$new_cases_smoothed)] <- 0
 df$new_deaths_smoothed[is.na(df$new_deaths_smoothed)] <- 0
-
+#df$total_vaccinations[is.na(df$total_vaccinations)] <- 0
+#df$accum_vaccinations <- cumsum(df$total_vaccinations)
 
 # estimate cases with various models
 
@@ -123,19 +133,22 @@ df$M2_R <- c(rep(0,4),(df$M2_new_cases[5:n]/df$M2_new_cases[1:n2]))
 # plot results
 
 p1 <- ggplot(data=df)+
-  geom_path(aes(x=date, y=total_cases/1e6, color='total_cases'))+
   geom_ribbon(aes(x=date, ymax=M2_accum_cases_upper/1e6, ymin=M2_accum_cases_lower/1e6), 
               fill=rgb(.8,.8,.8))+
+  geom_path(aes(x=date, y=total_vaccinations/1e6, color='vaccinations'))+
+  geom_path(aes(x=date, y=total_cases/1e6, color='total_cases'))+
   geom_path(aes(x=date, y=M2_accum_cases/1e6, color='M2_accum_cases'))+
   geom_path(aes(x=M1_date, y=M1_accum_cases/1e6, color='M1_accum_cases'))+
-  labs( x = "", y = "total infections in millions") +
+  labs( x = "", y = "accumulated number in millions") +
   scale_color_manual(name = NULL,
                      values = c( "total_cases" = "red", 
                                  "M1_accum_cases" = "black", 
-                                 "M2_accum_cases" = rgb(.5,.5,.5) ),
+                                 "M2_accum_cases" = rgb(.5,.5,.5),
+                                 "vaccinations" = "blue"),
                      labels = c("M2_accum_cases" ="model 2: cases = f(tests, pos. ratio)", 
                                 "M1_accum_cases" = "model 1: cases = f(deaths, IFR)", 
-                                "total_cases" = "official data (new cases: 7-day avg)"))+
+                                "total_cases" = "official data (new cases: 7-day avg)",
+                                "vaccinations" = "number of vaccinations"))+
   theme(legend.position = c(0.35, 0.85))
 
 
@@ -151,7 +164,7 @@ p31 <- ggplot(data=df)+
   geom_path(aes(x=date, y=positive_rate*100), color=rgb(.5,.5,.5))+
   geom_path(aes(x=date, y=pos_rate_raw*100), color='red')+
   coord_cartesian(ylim = c(0, 30))+
-  labs( x="", y="pos test rate in %")
+  labs( x="", y="share of pos. tests in %")
 
 p32 <- ggplot(data=df)+
   geom_path(aes(x=date, y=M2_R), color=rgb(.5,.5,.5))+ 
@@ -165,15 +178,15 @@ p3 <- plot_grid(p31, p32, ncol=1)
 #p4 <- plot_grid(p41, p42, ncol=1)
 p123 <- plot_grid(p1, p2, p3, nrow=1, rel_widths = c(1, 1, 0.6))
 title <- ggdraw() + draw_label(paste0(targetcountry, " (",
-                                      round(df$population[1]/1e6, digits=1), 
-                                      " M population, ", 
-                                      round(df$total_deaths[n]/1000, digits=1), 
-                                      " k deaths)"), fontface='bold')
+                      round(df$population[1]/1e6, digits=1), 
+                      " M population, ", 
+                      round(max(df$total_deaths, na.rm=TRUE)/1000, digits=1), 
+                      " k deaths)"), fontface='bold')
 info <- ggdraw() + draw_label(paste0('corona_models.R script version ', script_version,
-                                     ' | documentation: see hmbd.wordpress.com',
-                                     ' | data from ourworldindata.org: ',
-                                     data_source, ' | newest datapoint: ',
-                                     max(df$date)), size=8, color=rgb(.5,.5,.5))
+                      ' | documentation: see hmbd.wordpress.com',
+                      ' | data from ourworldindata.org: ',
+                      data_source, ' | newest datapoint: ',
+                      max(df$date)), size=8, color=rgb(.5,.5,.5))
 plt <- plot_grid(title,p123, info, ncol=1, rel_heights = c(0.1, 1, 0.05))
 ggsave(paste(targetcountry, '.png', sep = ""), plot=plt, width=12, height=5, dpi=150)
 }
