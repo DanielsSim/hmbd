@@ -22,17 +22,16 @@
 setwd('D:/Daniel/corona_modelle') # output folder for plots
 library('ggplot2')
 library('cowplot')
-script_version <- '1.1'
+script_version <- '1.4'
 
 data_source <- 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
 datafull <- read.csv(data_source)
 #datafull <- read.csv('owid-covid-data.csv') # use local copy for code dev.
 datafull$date <- as.Date(datafull$date)
 
-countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China',
-               'Denmark', 
-               'Finland', 'France', 'Germany', 'Greece', 'India', 'Iceland', 
-               'Italy', 'Japan', 'Netherlands', 'New Zealand',
+countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 
+               'Finland', 'France', 'Germany', 'Greece', 'India', 'Iceland', 'Israel',
+               'Italy', 'Ireland','Japan', 'Netherlands', 'New Zealand',
                'Norway', 'Portugal', 'Russia', 'South Africa', 'South Korea',
                'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'United Kingdom',
                'United States')
@@ -78,9 +77,24 @@ for (targetcountry in countries) {
 # move this country to a separate dataframe (df)
 df <- subset(datafull, location == targetcountry)
 
+# remove empty-data rows at end of dataframe
+while (is.na(df$new_cases[length(df$new_cases)])) {
+  df <- df[-length(df$new_cases),]
+}
+
 # cleanup missing data
 df$pos_rate_raw <- df$positive_rate
-# infer missing positive rate values from previous ones:
+# infer missing positive rate values from next one (for up to 7 days)
+j <- 0
+for (i in (length(df$positive_rate)-1):1) {
+  if(is.na(df$positive_rate[i])) {
+    if (j < 7) 
+      df$positive_rate[i] <- df$positive_rate[i+1]
+    j <- j+1
+  }
+  else j <- 0
+}
+# infer still missing positive rate values from previous ones:
 for (i in 2:length(df$positive_rate)) {
   if(is.na(df$positive_rate[i]))
     df$positive_rate[i] <- df$positive_rate[i-1]
@@ -139,15 +153,15 @@ p1 <- ggplot(data=df)+
   geom_path(aes(x=date, y=total_cases/1e6, color='total_cases'))+
   geom_path(aes(x=date, y=M2_accum_cases/1e6, color='M2_accum_cases'))+
   geom_path(aes(x=M1_date, y=M1_accum_cases/1e6, color='M1_accum_cases'))+
-  labs( x = "", y = "accumulated number in millions") +
+  labs( x = "", y = "accumulated count in millions") +
   scale_color_manual(name = NULL,
                      values = c( "total_cases" = "red", 
                                  "M1_accum_cases" = "black", 
                                  "M2_accum_cases" = rgb(.5,.5,.5),
                                  "vaccinations" = "blue"),
                      labels = c("M2_accum_cases" ="model 2: cases = f(tests, pos. ratio)", 
-                                "M1_accum_cases" = "model 1: cases = f(deaths, IFR)", 
-                                "total_cases" = "official data (new cases: 7-day avg)",
+                                "M1_accum_cases" = "model 1: cases = f(deaths, IFR)",
+                                "total_cases" = "official data",
                                 "vaccinations" = "number of vaccinations"))+
   theme(legend.position = c(0.35, 0.85))
 
@@ -158,19 +172,19 @@ p2 <- ggplot(data=df)+
               fill=rgb(.8,.8,.8))+
   geom_path(aes(x=date, y=M2_new_cases/1e3), color=rgb(.5,.5,.5))+
   geom_path(aes(x=M1_date, y=M1_new_cases/1e3), color='black')+
-  labs( x = "", y = "new infections in thousands")
+  labs( x = "", y = "daily new infections in thousands")
   
 p31 <- ggplot(data=df)+
   geom_path(aes(x=date, y=positive_rate*100), color=rgb(.5,.5,.5))+
-  geom_path(aes(x=date, y=pos_rate_raw*100), color='red')+
-  coord_cartesian(ylim = c(0, 30))+
-  labs( x="", y="share of pos. tests in %")
+  geom_point(aes(x=date, y=pos_rate_raw*100), color='red', size=1)+
+  coord_cartesian(ylim = c(.1, 100))+
+  labs( x="", y="share of pos. tests in %")+ scale_y_continuous(trans='log10')
 
 p32 <- ggplot(data=df)+
   geom_path(aes(x=date, y=M2_R), color=rgb(.5,.5,.5))+ 
   geom_path(aes(x=date, y=R), color='red')+
-  coord_cartesian(ylim = c(0, 3))+
-  labs( x="", y="reproduction rate R")
+  coord_cartesian(ylim = c(0.5, 5))+
+  labs( x="", y="reproduction rate R")+ scale_y_continuous(trans='log10')
 
 
 # plot instruction taken from https://www.r-bloggers.com/2018/08/beyond-basic-r-plotting-with-ggplot2-and-multiple-plots-in-one-figure/
