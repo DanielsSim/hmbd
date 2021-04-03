@@ -21,18 +21,19 @@
 
 setwd('D:/Daniel/corona_modelle') # output folder for plots
 library('ggplot2')
+library(tidyquant) # adds geom_ma plot option for moving averages
 library('cowplot')
-script_version <- '1.4'
+script_version <- '1.5'
 
 data_source <- 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
 datafull <- read.csv(data_source)
 #datafull <- read.csv('owid-covid-data.csv') # use local copy for code dev.
 datafull$date <- as.Date(datafull$date)
 
-countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 
+countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China', 'Czechia', 'Denmark', 
                'Finland', 'France', 'Germany', 'Greece', 'India', 'Iceland', 'Israel',
                'Italy', 'Ireland','Japan', 'Netherlands', 'New Zealand',
-               'Norway', 'Portugal', 'Russia', 'South Africa', 'South Korea',
+               'Norway', 'Poland','Portugal', 'Russia', 'South Africa', 'South Korea',
                'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'United Kingdom',
                'United States')
 
@@ -52,9 +53,9 @@ ggsave("_model1_IFR_function.png", plot=p1, width=6, height=4, dpi=150)
 
 # plot compensation function for model 2
 # model parameters:
-M2_lower <- c(80,0.4)
-M2_best_guess <- c(120,0.6)
-M2_upper <- c(160,0.8)
+M2_lower <- c(500,0.5)
+M2_best_guess <- c(300,0.4)
+M2_upper <- c(150,0.3)
 pos_rate <- 0.001*(1:500)
 M2_ratio_lower = (1 + pos_rate*M2_lower[1])^M2_lower[2]
 M2_ratio_best_guess = (1 + pos_rate*M2_best_guess[1])^M2_best_guess[2]
@@ -103,18 +104,22 @@ for (i in 2:length(df$positive_rate)) {
 df$positive_rate[is.na(df$positive_rate)] <- 0.2
 
 # same cleanup process for vaccinations:
-for (i in 2:length(df$total_vaccinations)) {
-  if(is.na(df$total_vaccinations[i]))
-    df$total_vaccinations[i] <- df$total_vaccinations[i-1]
+for (i in 2:length(df$people_vaccinated)) {
+  if(is.na(df$people_vaccinated[i]))
+    df$people_vaccinated[i] <- df$people_vaccinated[i-1]
 }
-df$total_vaccinations[is.na(df$total_vaccinations)] <- 0
+#df$people_vaccinated[is.na(df$people_vaccinated)] <- 0
+
+for (i in 2:length(df$people_fully_vaccinated)) {
+  if(is.na(df$people_fully_vaccinated[i]))
+    df$people_fully_vaccinated[i] <- df$people_fully_vaccinated[i-1]
+}
+#df$people_fully_vaccinated[is.na(df$people_fully_vaccinated)] <- 0
 
 
 # new_cases, new_deaths: remove na's
 df$new_cases_smoothed[is.na(df$new_cases_smoothed)] <- 0
 df$new_deaths_smoothed[is.na(df$new_deaths_smoothed)] <- 0
-#df$total_vaccinations[is.na(df$total_vaccinations)] <- 0
-#df$accum_vaccinations <- cumsum(df$total_vaccinations)
 
 # estimate cases with various models
 
@@ -149,7 +154,8 @@ df$M2_R <- c(rep(0,4),(df$M2_new_cases[5:n]/df$M2_new_cases[1:n2]))
 p1 <- ggplot(data=df)+
   geom_ribbon(aes(x=date, ymax=M2_accum_cases_upper/1e6, ymin=M2_accum_cases_lower/1e6), 
               fill=rgb(.8,.8,.8))+
-  geom_path(aes(x=date, y=total_vaccinations/1e6, color='vaccinations'))+
+  geom_path(aes(x=date, y=people_fully_vaccinated/1e6, color='vac_people'))+
+  geom_path(aes(x=date, y=people_vaccinated/1e6, color='vaccinations'))+
   geom_path(aes(x=date, y=total_cases/1e6, color='total_cases'))+
   geom_path(aes(x=date, y=M2_accum_cases/1e6, color='M2_accum_cases'))+
   geom_path(aes(x=M1_date, y=M1_accum_cases/1e6, color='M1_accum_cases'))+
@@ -158,11 +164,13 @@ p1 <- ggplot(data=df)+
                      values = c( "total_cases" = "red", 
                                  "M1_accum_cases" = "black", 
                                  "M2_accum_cases" = rgb(.5,.5,.5),
-                                 "vaccinations" = "blue"),
-                     labels = c("M2_accum_cases" ="model 2: cases = f(tests, pos. ratio)", 
-                                "M1_accum_cases" = "model 1: cases = f(deaths, IFR)",
-                                "total_cases" = "official data",
-                                "vaccinations" = "number of vaccinations"))+
+                                 "vaccinations" = "blue",
+                                 "vac_people" = rgb(.5,.5,1)),
+                     labels = c("M2_accum_cases" ="model 2: infections = f(tests, pos. ratio)", 
+                                "M1_accum_cases" = "model 1: infections = f(deaths, IFR)",
+                                "total_cases" = "cases according testing (e.g. PCR)",
+                                "vaccinations" = "people vaccinated",
+                                "vac_people" = "people fully vaccinated"))+
   theme(legend.position = c(0.35, 0.85))
 
 
@@ -181,8 +189,8 @@ p31 <- ggplot(data=df)+
   labs( x="", y="share of pos. tests in %")+ scale_y_continuous(trans='log10')
 
 p32 <- ggplot(data=df)+
-  geom_path(aes(x=date, y=M2_R), color=rgb(.5,.5,.5))+ 
-  geom_path(aes(x=date, y=R), color='red')+
+  geom_ma(aes(x=date, y=M2_R), n=10, color=rgb(.5,.5,.5), linetype="solid")+ 
+  geom_ma(aes(x=date, y=R), n=10, color='red', linetype="solid")+
   coord_cartesian(ylim = c(0.5, 5))+
   labs( x="", y="reproduction rate R")+ scale_y_continuous(trans='log10')
 
