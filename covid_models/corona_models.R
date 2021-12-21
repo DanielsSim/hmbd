@@ -34,8 +34,8 @@ countries <- c('Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China', '
                'Finland', 'France', 'Germany', 'Greece', 'India', 'Iceland', 'Israel',
                'Italy', 'Ireland','Japan', 'Netherlands', 'New Zealand',
                'Norway', 'Poland','Portugal', 'Russia', 'South Africa', 'South Korea',
-               'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'United Kingdom',
-               'United States')
+               'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'Tunisia', 'United Kingdom',
+               'United States', 'Vietnam')
 
 
 # plot IFR function for model 1
@@ -212,3 +212,4 @@ info <- ggdraw() + draw_label(paste0('corona_models.R script version ', script_v
 plt <- plot_grid(title,p123, info, ncol=1, rel_heights = c(0.1, 1, 0.05))
 ggsave(paste(targetcountry, '.png', sep = ""), plot=plt, width=12, height=5, dpi=150)
 }
+
