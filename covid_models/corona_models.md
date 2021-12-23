@@ -1,12 +1,12 @@
-# COVID-19 infection estimates (updated weekly)
+# COVID-19 infection estimates
 
 After spending months looking at various coronavirus dashboard, I decided to code my own plots. Starting point for all this are the [Corona plots by David Kriesel](http://dkriesel.com/en/corona) and [the dashboards and datasets provided by our world in data](https://ourworldindata.org/coronavirus). Both are excellent and I don’t try to replace them. For Germany, please also see the [reports and dashboard for the COVID-19 Simulator](https://covid-simulator.com/en/).
 
-Instead, I’m interested in estimating actual infection counts: we test only a small part of each country and depending on how much we test, we miss a large share of all infections. This is important for many questions, like comparing countries, estimating cases when testing changes and so on. So I implemented two models for estimating actual infection numbers. Both have limitations, but when the results match, I’m reasonably confident that we’re seeing the right picture.
+Instead, I’m interested in estimating actual infection counts: we test only a small part of each country and depending on how much we test, we miss a large share of all infections. This is important for many questions, like comparing countries, estimating cases when testing changes and so on. So I implemented two models for estimating actual infection numbers. Both have limitations, but when the results match, I’m reasonably confident that we’re seeing the right picture. Plots will be updated at least once per week - current data state is: ![](_version_date.png)
 
 _Please note that this is a statistics- and data-driven picture. I’m running a lot of numbers because it helps me become less confused, but if you’ve lost someone in events related to the pandemic or are directly affected in other ways (e.g. economically), this is probably not helpful._
 
-I’ll first show my plots for Germany and the United States, then describe how the models work and finally provide a gallery with plots for ~20 different countries. Plots will be updated once per week (possibly less often over summer 2021 unless something very surprising happens).
+I’ll first show my plots for Germany and the United States, then describe how the models work and finally provide a gallery with plots for ~20 different countries. 
 
 ![Germany](Germany.png)
 ![United States](United States.png)
@@ -18,16 +18,16 @@ _(Starting April 2021, I’m also plotting people vaccinated / people fully vacc
 
 Each plot shows three different curves:
 
-### Red curve: official test numbers
+<span style="color:red"><b>Red curve: official test numbers</b></span>
 
 This is what we see in most dashboards and what get’s mentioned in public discourse: positive cases from covid-19 testing for each country (I’m using the ourworldindata.org dataset which itself currently uses John Hopkins as source for test and death numbers). For the daily new cases, I’m using a smoothed curve to avoid the daily fluctuations between weekend and workday numbers (new_cases_smoothed in the ourworldindata dataset).
 Rule of thumb: if more than 1% of all tests are positive (see plot on the upper right), you should not take the official numbers at face value as we’ll miss a large share of all infections! So how can we estimate the actual numbers? That’s where the models come into play:
 
-### Black curve: infections estimated from deaths and an assumed infection fatality rate (model 1)
+<b>Black curve: infections estimated from deaths and an assumed infection fatality rate (model 1)</b>
 
 We can estimate infections = deaths / infection_fatality_rate by using a reasonable estimate for the fatality rate (see bottom of the post for details). Update: from spring 2021 on, vaccination rates are rising and this makes model 1 outdated. So please keep this in mind when interpreting plots.
 
-### Grey Curve: Scale cases with a test-dependent ratio (model 2)
+<span style="color:grey"><b>Grey Curve: Scale cases with a test-dependent ratio (model 2)</b></span>
 
 The less we test, the more infections we’re missing. So we can also estimate infections by scaling the cases with our best estimate of what the number of undetected vs. detected cases should be (aka “Dunkelziffer” or dark figure).
 
@@ -37,8 +37,7 @@ Going back to the plot’s for Germany and United States, I’d like to highligh
 * In both Germany and the United States, we’re missing a lot of infections – going by model 1 and model 2’s “best guess”, we’re only seeing one out of four infections in our testing (this matches official estimates)
 So let’s see the plots for a few countries.
 
-COVID-19 infection estimates for various countries
-Click to enlarge; last updated on December 18th, 2021.
+## COVID-19 infection estimates for various countries
 
 ![Australia](Australia.png)
 ![Austria](Austria.png)
